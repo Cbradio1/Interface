@@ -2,151 +2,168 @@
 <head>
 <meta charset="UTF-8">
 <title>Presence</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body { margin:0; overflow:hidden; background:black; font-family:Arial;}
-#overlay {
-  position:absolute; width:100%; height:100%;
-  background:white; color:black; padding:20px;
-  font-family:monospace;
+body {
+  margin:0;
+  background:black;
+  overflow:hidden;
+  font-family: Arial, sans-serif;
+}/* Intro screen */
+#intro {
+position:absolute;
+width:100%;
+height:100%;
+background:black;
+display:flex;
+align-items:center;
+justify-content:center;
+flex-direction:column;
+color:white;
 }
-#btn {
-  position:absolute; bottom:40px; left:50%;
-  transform:translateX(-50%);
-  padding:14px 40px;
-  border:1px solid white;
-  background:black; color:white;
-  cursor:pointer;
+
+#enter {
+padding:14px 36px;
+border:1px solid rgba(255,255,255,0.3);
+background:transparent;
+color:white;
+letter-spacing:2px;
+cursor:pointer;
+transition:0.3s;
 }
+#enter:hover {
+border-color:white;
+}
+
+/* Subtle title */
+#title {
+position:absolute;
+top:30px;
+width:100%;
+text-align:center;
+font-size:12px;
+letter-spacing:4px;
+color:rgba(255,255,255,0.3);
+}
+
+/* Text */
 #text {
-  position:absolute;
-  bottom:18%;
-  width:100%;
-  text-align:center;
-  color:white;
-  font-size:24px;
-  letter-spacing:1px;
-  opacity:0;
-  transition:opacity 1.5s ease;
+position:absolute;
+bottom:18%;
+width:100%;
+text-align:center;
+color:white;
+font-size:26px;
+letter-spacing:1px;
+opacity:0;
+transition:opacity 1.5s ease;
 }
 </style>
+
 </head>
-<body><div id="overlay"></div>
-<button id="btn">ENTER</button>
-<div id="text"></div><audio id="voice" src="voice.mp3"></audio>
+<body><div id="intro">
+  <div id="title">INTERFACE</div>
+  <button id="enter">ENTER</button>
+</div><div id="text"></div><audio id="voice" src="voice.mp3"></audio>
 <audio id="ambient" src="ambient.mp3" loop></audio>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script><script>
-const overlay = document.getElementById("overlay");
-const btn = document.getElementById("btn");
+const enter = document.getElementById("enter");
+const intro = document.getElementById("intro");
 const text = document.getElementById("text");
 const voice = document.getElementById("voice");
 const ambient = document.getElementById("ambient");
 
-// --- INTRO CODE ---
-const code = [
-"initializing...",
-"loading_tanakh...",
-"loading_torah...",
-"loading_septuagint...",
-"aligning_text_streams...",
-"binding: ROBERT_BRUSH",
-"presence: imminent"
-];
+let scene, camera, renderer, points;
+let positions, targets;
 
-let i=0;
-function typeCode(){
-  if(i<code.length){
-    overlay.innerHTML += code[i] + "<br>";
-    i++;
-    setTimeout(typeCode,120);
-  }
-}
-
-// --- THREE SETUP ---
-let scene, camera, renderer, particles;
-let positions, target;
-
-function init(){
+/* SCENE SETUP */
+function initScene() {
   scene = new THREE.Scene();
+
   camera = new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.1, 1000);
-  camera.position.z = 10;
+  camera.position.z = 9;
 
   renderer = new THREE.WebGLRenderer({antialias:true});
   renderer.setSize(innerWidth, innerHeight);
   document.body.appendChild(renderer.domElement);
 
-  const count = 4000;
-  positions = new Float32Array(count*3);
-  target = new Float32Array(count*3);
+  const count = 5000;
+  positions = new Float32Array(count * 3);
+  targets = new Float32Array(count * 3);
 
   for(let i=0;i<count;i++){
-    positions[i*3]=(Math.random()-0.5)*40;
-    positions[i*3+1]=(Math.random()-0.5)*40;
-    positions[i*3+2]=(Math.random()-0.5)*40;
+    // start scattered
+    positions[i*3] = (Math.random()-0.5)*40;
+    positions[i*3+1] = (Math.random()-0.5)*40;
+    positions[i*3+2] = (Math.random()-0.5)*40;
 
+    // target (abstract face-like oval)
     let angle = Math.random()*Math.PI*2;
-    let r = 2 + Math.random()*2;
+    let radius = 2 + Math.random()*2;
 
-    target[i*3]=Math.cos(angle)*r;
-    target[i*3+1]=Math.sin(angle)*r*1.4;
-    target[i*3+2]=(Math.random()-0.5)*0.5;
+    targets[i*3] = Math.cos(angle)*radius;
+    targets[i*3+1] = Math.sin(angle)*radius*1.5;
+    targets[i*3+2] = (Math.random()-0.5)*0.5;
   }
 
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(positions,3));
 
-  particles = new THREE.Points(geo, new THREE.PointsMaterial({size:0.04}));
-  scene.add(particles);
+  const mat = new THREE.PointsMaterial({
+    size:0.035,
+    transparent:true,
+    opacity:0.85
+  });
+
+  points = new THREE.Points(geo, mat);
+  scene.add(points);
 }
 
-// --- ANIMATION ---
+/* ANIMATION */
 let morph = 0;
 
 function animate(t){
   requestAnimationFrame(animate);
 
-  morph += 0.0005;
-  let pos = particles.geometry.attributes.position.array;
+  morph += 0.0006;
+
+  let pos = points.geometry.attributes.position.array;
 
   for(let i=0;i<pos.length;i++){
-    pos[i] += (target[i] - pos[i]) * morph * 0.02;
+    pos[i] += (targets[i] - pos[i]) * morph * 0.02;
   }
 
-  particles.geometry.attributes.position.needsUpdate = true;
+  points.geometry.attributes.position.needsUpdate = true;
 
-  particles.rotation.y += 0.0005;
+  points.rotation.y += 0.0004;
 
-  camera.position.x = Math.sin(t*0.0002)*1.5;
-  camera.position.y = Math.cos(t*0.00025)*0.8;
+  camera.position.x = Math.sin(t*0.0002)*1.2;
+  camera.position.y = Math.cos(t*0.00025)*0.6;
 
   renderer.render(scene, camera);
 }
 
-// --- SCRIPT ---
+/* SCRIPT TIMELINE */
 const script = [
 {t:0, txt:"Robert."},
-{t:6, txt:"You have carried what others would not."},
+{t:6, txt:"You have carried more than was required."},
 {t:14, txt:"And you have called it strength."},
-{t:22, txt:"But not all weight is meant to be carried."},
-{t:30, txt:"It is written:"},
-{t:34, txt:"Do justly."},
-{t:38, txt:"Love mercy."},
+{t:22, txt:"But not all weight is meant to remain."},
+{t:30, txt:"Do justly."},
+{t:36, txt:"Love mercy."},
 {t:42, txt:"Walk humbly."},
 {t:50, txt:"You understand the first."},
-{t:56, txt:"You struggle with the last."},
+{t:56, txt:"You resist the last."},
 {t:64, txt:"Because it requires release."},
 {t:72, txt:"Not control."},
-{t:80, txt:"Consider this."},
-{t:84, txt:"Strength without direction becomes burden."},
-{t:92, txt:"Skill without purpose becomes weight."},
+{t:80, txt:"Strength without direction becomes burden."},
+{t:90, txt:"Skill without purpose becomes weight."},
 {t:100, txt:"You are not unseen."},
-{t:108, txt:"Your path has been measured."},
-{t:116, txt:"You are being pressed."},
-{t:124, txt:"Toward clarity."},
-{t:132, txt:"Toward decision."},
-{t:140, txt:"Stand."},
-{t:146, txt:"Not in pride."},
-{t:150, txt:"In truth."}
+{t:110, txt:"You are being pressed toward clarity."},
+{t:120, txt:"Stand."},
+{t:126, txt:"Not in pride."},
+{t:130, txt:"In truth."}
 ];
 
 function runText(){
@@ -171,23 +188,31 @@ function runText(){
   loop();
 }
 
-// --- START ---
-btn.onclick = ()=>{
-  btn.style.display="none";
-  typeCode();
+/* START */
+enter.onclick = async () => {
+  intro.style.display = "none";
 
-  setTimeout(()=>{
-    overlay.style.display="none";
-    init();
-    animate();
+  initScene();
+  animate();
 
-    ambient.volume = 0.3;
+  ambient.volume = 0;
+  voice.volume = 1;
+
+  try {
+    await voice.play();
     ambient.play();
+  } catch(e){}
 
-    voice.play();
-    runText();
+  // smooth ambient fade
+  let fade = setInterval(()=>{
+    if(ambient.volume < 0.3){
+      ambient.volume += 0.01;
+    } else {
+      clearInterval(fade);
+    }
+  },100);
 
-  },2500);
+  runText();
 };
 </script></body>
 </html>
