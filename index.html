@@ -216,4 +216,135 @@ enter.onclick = async () => {
 };
 </script></body>
 </html>
-voice.mp3
+import numpy as np import soundfile as sf from scipy.signal import butter, lfilter import librosa
+
+=========================================
+
+MATRIX-STYLE VOICE EFFECT GENERATOR
+
+=========================================
+
+Features:
+
+- Deep cinematic pitch shift
+
+- Metallic resonance
+
+- Stereo echo
+
+- Dark ambient reverb
+
+- Distortion layer
+
+
+
+Install requirements:
+
+pip install numpy soundfile scipy librosa
+
+
+
+Usage:
+
+python matrix_voice.py
+
+=========================================
+
+INPUT_FILE = "input_voice.wav" OUTPUT_FILE = "matrix_voice_output.wav"
+
+-----------------------------------------
+
+Load audio
+
+-----------------------------------------
+
+audio, sr = librosa.load(INPUT_FILE, sr=None, mono=True)
+
+-----------------------------------------
+
+Pitch shift down
+
+-----------------------------------------
+
+pitch_shifted = librosa.effects.pitch_shift( audio, sr=sr, n_steps=-5 )
+
+-----------------------------------------
+
+Distortion
+
+-----------------------------------------
+
+def distortion(signal, gain=3.5): return np.tanh(signal * gain)
+
+processed = distortion(pitch_shifted)
+
+-----------------------------------------
+
+Radio / cyber filter
+
+-----------------------------------------
+
+def bandpass(data, lowcut, highcut, fs, order=4): nyquist = 0.5 * fs low = lowcut / nyquist high = highcut / nyquist b, a = butter(order, [low, high], btype='band') return lfilter(b, a, data)
+
+processed = bandpass(processed, 180, 3400, sr)
+
+-----------------------------------------
+
+Metallic echo
+
+-----------------------------------------
+
+def echo(signal, delay_ms=140, decay=0.45): delay_samples = int(sr * delay_ms / 1000) echoed = np.copy(signal)
+
+for i in range(delay_samples, len(signal)):
+    echoed[i] += decay * signal[i - delay_samples]
+
+return echoed
+
+processed = echo(processed)
+
+-----------------------------------------
+
+Reverb effect
+
+-----------------------------------------
+
+def reverb(signal, decay=0.35, repeats=8): out = np.copy(signal)
+
+for r in range(1, repeats):
+    delay = int(sr * 0.03 * r)
+
+    for i in range(delay, len(signal)):
+        out[i] += signal[i - delay] * (decay / r)
+
+return out
+
+processed = reverb(processed)
+
+-----------------------------------------
+
+Stereo widening
+
+-----------------------------------------
+
+left = processed right = np.roll(processed, 120)
+
+stereo = np.vstack([left, right]).T
+
+-----------------------------------------
+
+Normalize
+
+-----------------------------------------
+
+stereo /= np.max(np.abs(stereo))
+
+-----------------------------------------
+
+Save output
+
+-----------------------------------------
+
+sf.write(OUTPUT_FILE, stereo, sr)
+
+print("====================================") print("Matrix voice effect created") print(f"Saved as: {OUTPUT_FILE}") print("====================================")
