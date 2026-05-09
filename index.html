@@ -1,15 +1,17 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Presence</title>
+<title>Interface - Presence</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body {
   margin:0;
   background:black;
   overflow:hidden;
-  font-family: Arial, sans-serif;
-}/* Intro screen */
+  font-family: 'Courier New', Courier, monospace;
+}
+/* Intro screen */
 #intro {
 position:absolute;
 width:100%;
@@ -20,6 +22,7 @@ align-items:center;
 justify-content:center;
 flex-direction:column;
 color:white;
+z-index: 10;
 }
 
 #enter {
@@ -30,9 +33,11 @@ color:white;
 letter-spacing:2px;
 cursor:pointer;
 transition:0.3s;
+font-family: inherit;
 }
 #enter:hover {
 border-color:white;
+background: rgba(255,255,255,0.1);
 }
 
 /* Subtle title */
@@ -46,62 +51,64 @@ letter-spacing:4px;
 color:rgba(255,255,255,0.3);
 }
 
-/* Text */
+/* Text Display */
 #text {
 position:absolute;
 bottom:18%;
 width:100%;
 text-align:center;
 color:white;
-font-size:26px;
+font-size:24px;
 letter-spacing:1px;
 opacity:0;
-transition:opacity 1.5s ease;
+transition:opacity 0.8s ease;
+text-shadow: 0 0 10px rgba(255,255,255,0.5);
+pointer-events: none;
 }
 </style>
-
 </head>
-<body><div id="intro">
+<body>
+
+<div id="intro">
   <div id="title">INTERFACE</div>
-  <button id="enter">ENTER</button>
-</div><div id="text"></div><audio id="voice" src="voice.mp3"></audio>
+  <button id="enter">INITIATE SEQUENCE</button>
+</div>
+
+<div id="text"></div>
+
 <audio id="ambient" src="ambient.mp3" loop></audio>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script><script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script>
 const enter = document.getElementById("enter");
 const intro = document.getElementById("intro");
-const text = document.getElementById("text");
-const voice = document.getElementById("voice");
+const textDisplay = document.getElementById("text");
 const ambient = document.getElementById("ambient");
 
 let scene, camera, renderer, points;
 let positions, targets;
 
-/* SCENE SETUP */
+/* SCENE SETUP (The Particle Face) */
 function initScene() {
   scene = new THREE.Scene();
-
-  camera = new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.1, 1000);
+  camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.1, 1000);
   camera.position.z = 9;
 
   renderer = new THREE.WebGLRenderer({antialias:true});
-  renderer.setSize(innerWidth, innerHeight);
+  renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
 
-  const count = 5000;
+  const count = 6000;
   positions = new Float32Array(count * 3);
   targets = new Float32Array(count * 3);
 
-  for(let i=0;i<count;i++){
-    // start scattered
+  for(let i=0; i<count; i++){
     positions[i*3] = (Math.random()-0.5)*40;
     positions[i*3+1] = (Math.random()-0.5)*40;
     positions[i*3+2] = (Math.random()-0.5)*40;
 
-    // target (abstract face-like oval)
     let angle = Math.random()*Math.PI*2;
     let radius = 2 + Math.random()*2;
-
     targets[i*3] = Math.cos(angle)*radius;
     targets[i*3+1] = Math.sin(angle)*radius*1.5;
     targets[i*3+2] = (Math.random()-0.5)*0.5;
@@ -109,242 +116,98 @@ function initScene() {
 
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(positions,3));
-
-  const mat = new THREE.PointsMaterial({
-    size:0.035,
-    transparent:true,
-    opacity:0.85
-  });
-
+  const mat = new THREE.PointsMaterial({ size:0.03, color: 0xffffff, transparent:true, opacity:0.8 });
   points = new THREE.Points(geo, mat);
   scene.add(points);
 }
 
-/* ANIMATION */
-let morph = 0;
-
 function animate(t){
   requestAnimationFrame(animate);
-
-  morph += 0.0006;
-
   let pos = points.geometry.attributes.position.array;
-
-  for(let i=0;i<pos.length;i++){
-    pos[i] += (targets[i] - pos[i]) * morph * 0.02;
+  for(let i=0; i<pos.length; i++){
+    pos[i] += (targets[i] - pos[i]) * 0.015;
   }
-
   points.geometry.attributes.position.needsUpdate = true;
-
-  points.rotation.y += 0.0004;
-
-  camera.position.x = Math.sin(t*0.0002)*1.2;
-  camera.position.y = Math.cos(t*0.00025)*0.6;
-
+  points.rotation.y += 0.001;
   renderer.render(scene, camera);
 }
 
-/* SCRIPT TIMELINE */
+/* SCRIPT DATA */
 const script = [
-{t:0, txt:"Robert."},
-{t:6, txt:"You have carried more than was required."},
-{t:14, txt:"And you have called it strength."},
-{t:22, txt:"But not all weight is meant to remain."},
-{t:30, txt:"Do justly."},
-{t:36, txt:"Love mercy."},
-{t:42, txt:"Walk humbly."},
-{t:50, txt:"You understand the first."},
-{t:56, txt:"You resist the last."},
-{t:64, txt:"Because it requires release."},
-{t:72, txt:"Not control."},
-{t:80, txt:"Strength without direction becomes burden."},
-{t:90, txt:"Skill without purpose becomes weight."},
-{t:100, txt:"You are not unseen."},
-{t:110, txt:"You are being pressed toward clarity."},
-{t:120, txt:"Stand."},
-{t:126, txt:"Not in pride."},
-{t:130, txt:"In truth."}
+  {t:0, txt:"Robert."},
+  {t:4, txt:"You have carried more than was required."},
+  {t:9, txt:"And you have called it strength."},
+  {t:14, txt:"But not all weight is meant to remain."},
+  {t:20, txt:"Do justly. Love mercy. Walk humbly."},
+  {t:28, txt:"You understand the first."},
+  {t:32, txt:"You resist the last."},
+  {t:37, txt:"Because it requires release."},
+  {t:42, txt:"Not control."},
+  {t:48, txt:"Strength without direction becomes burden."},
+  {t:55, txt:"Skill without purpose becomes weight."},
+  {t:62, txt:"You are not unseen."},
+  {t:68, txt:"You are being pressed toward clarity."},
+  {t:75, txt:"Stand. Not in pride. In truth."}
 ];
 
-function runText(){
-  let start = performance.now()/1000;
+/* LIVE VOICE ENGINE */
+function speak(message) {
+    const msg = new SpeechSynthesisUtterance(message);
+    const voices = window.speechSynthesis.getVoices();
+    // Try to find a deep male voice, otherwise use default
+    msg.voice = voices.find(v => v.name.includes('Male') || v.name.includes('Google US English')) || voices[0];
+    msg.pitch = 0.1; // Deepest possible pitch
+    msg.rate = 0.75; // Slower, more cinematic speed
+    msg.volume = 1;
+    window.speechSynthesis.speak(msg);
+}
 
-  function loop(){
-    let now = performance.now()/1000 - start;
+/* TIMELINE CONTROLLER */
+function runSequence() {
+  let startTime = performance.now() / 1000;
+  let spokenIndex = new Set();
 
-    script.forEach(line=>{
-      if(Math.abs(now-line.t)<0.4){
-        text.style.opacity=0;
-        setTimeout(()=>{
-          text.innerText=line.txt;
-          text.style.opacity=1;
-        },200);
+  function update() {
+    let elapsed = (performance.now() / 1000) - startTime;
+
+    script.forEach((line, index) => {
+      if (elapsed >= line.t && !spokenIndex.has(index)) {
+        // Update Text
+        textDisplay.style.opacity = 0;
+        setTimeout(() => {
+            textDisplay.innerText = line.txt;
+            textDisplay.style.opacity = 1;
+        }, 100);
+
+        // Trigger Voice
+        speak(line.txt);
+        spokenIndex.add(index);
       }
     });
 
-    requestAnimationFrame(loop);
+    if (spokenIndex.size < script.length) {
+      requestAnimationFrame(update);
+    }
   }
-
-  loop();
+  update();
 }
 
-/* START */
-enter.onclick = async () => {
+/* INITIALIZE ON CLICK */
+enter.onclick = () => {
   intro.style.display = "none";
-
   initScene();
   animate();
+  
+  // Try to play ambient if file exists
+  ambient.volume = 0.2;
+  ambient.play().catch(() => console.log("Ambient file missing, skipping."));
 
-  ambient.volume = 0;
-  voice.volume = 1;
-
-  try {
-    await voice.play();
-    ambient.play();
-  } catch(e){}
-
-  // smooth ambient fade
-  let fade = setInterval(()=>{
-    if(ambient.volume < 0.3){
-      ambient.volume += 0.01;
-    } else {
-      clearInterval(fade);
-    }
-  },100);
-
-  runText();
+  // Start the voice and text sequence
+  runSequence();
 };
-</script></body>
+
+// Pre-load voices for mobile browsers
+window.speechSynthesis.getVoices();
+</script>
+</body>
 </html>
-import numpy as np import soundfile as sf from scipy.signal import butter, lfilter import librosa
-
-=========================================
-
-MATRIX-STYLE VOICE EFFECT GENERATOR
-
-=========================================
-
-Features:
-
-- Deep cinematic pitch shift
-
-- Metallic resonance
-
-- Stereo echo
-
-- Dark ambient reverb
-
-- Distortion layer
-
-
-
-Install requirements:
-
-pip install numpy soundfile scipy librosa
-
-
-
-Usage:
-
-python matrix_voice.py
-
-=========================================
-
-INPUT_FILE = "input_voice.wav" OUTPUT_FILE = "matrix_voice_output.wav"
-
------------------------------------------
-
-Load audio
-
------------------------------------------
-
-audio, sr = librosa.load(INPUT_FILE, sr=None, mono=True)
-
------------------------------------------
-
-Pitch shift down
-
------------------------------------------
-
-pitch_shifted = librosa.effects.pitch_shift( audio, sr=sr, n_steps=-5 )
-
------------------------------------------
-
-Distortion
-
------------------------------------------
-
-def distortion(signal, gain=3.5): return np.tanh(signal * gain)
-
-processed = distortion(pitch_shifted)
-
------------------------------------------
-
-Radio / cyber filter
-
------------------------------------------
-
-def bandpass(data, lowcut, highcut, fs, order=4): nyquist = 0.5 * fs low = lowcut / nyquist high = highcut / nyquist b, a = butter(order, [low, high], btype='band') return lfilter(b, a, data)
-
-processed = bandpass(processed, 180, 3400, sr)
-
------------------------------------------
-
-Metallic echo
-
------------------------------------------
-
-def echo(signal, delay_ms=140, decay=0.45): delay_samples = int(sr * delay_ms / 1000) echoed = np.copy(signal)
-
-for i in range(delay_samples, len(signal)):
-    echoed[i] += decay * signal[i - delay_samples]
-
-return echoed
-
-processed = echo(processed)
-
------------------------------------------
-
-Reverb effect
-
------------------------------------------
-
-def reverb(signal, decay=0.35, repeats=8): out = np.copy(signal)
-
-for r in range(1, repeats):
-    delay = int(sr * 0.03 * r)
-
-    for i in range(delay, len(signal)):
-        out[i] += signal[i - delay] * (decay / r)
-
-return out
-
-processed = reverb(processed)
-
------------------------------------------
-
-Stereo widening
-
------------------------------------------
-
-left = processed right = np.roll(processed, 120)
-
-stereo = np.vstack([left, right]).T
-
------------------------------------------
-
-Normalize
-
------------------------------------------
-
-stereo /= np.max(np.abs(stereo))
-
------------------------------------------
-
-Save output
-
------------------------------------------
-
-sf.write(OUTPUT_FILE, stereo, sr)
-
-print("====================================") print("Matrix voice effect created") print(f"Saved as: {OUTPUT_FILE}") print("====================================")
