@@ -54,7 +54,7 @@ body{font-family:'Courier New',Courier,monospace;}
 <div id="vignette"></div>
 <div id="scan"></div>
 <div class="chud hudbl">NEURAL/ACTIVE<br>SYS.PRESENCE<br>▸ INTERFACE</div>
-<div class="chud hudbr">SEQUENCE/INIT<br>PARTICLE.MESH<br>VOICE ▸ DEEP</div>
+<div class="chud hudbr">SEQUENCE/INIT<br>PARTICLE.MESH<br>VOICE ▸ ALIVE</div>
 
 <div id="intro">
   <div class="cc tl"></div><div class="cc br2"></div>
@@ -68,9 +68,9 @@ body{font-family:'Courier New',Courier,monospace;}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-// ═══════════════════════════════════════════════════════
-//  MATRIX RAIN
-// ═══════════════════════════════════════════════════════
+// ———————————————————————————————————————————————————————
+// MATRIX RAIN
+// ———————————————————————————————————————————————————————
 const rainCv=document.getElementById('rain'),rCtx=rainCv.getContext('2d');
 const KANA='アイウエオカキクケコサシスセソ0110100101';
 let rCols,rDrops,rainAlpha=1;const rSz=13;
@@ -94,18 +94,19 @@ resizeRain();window.addEventListener('resize',resizeRain);
   requestAnimationFrame(loop);
 })();
 
-// ═══════════════════════════════════════════════════════
-//  WEB AUDIO ENGINE  — deep reverb + bass + pitch down
-// ═══════════════════════════════════════════════════════
+// ———————————————————————————————————————————————————————
+// WEB AUDIO ENGINE — THE ALIVE SETTINGS
+// ———————————————————————————————————————————————————————
 let audioCtx, masterGain, effectChainInput, droneStarted=false;
 
-function buildImpulseResponse(duration, decay){
+function buildImpulseResponse(duration, decay) {
   const len = audioCtx.sampleRate * duration;
   const buf = audioCtx.createBuffer(2, len, audioCtx.sampleRate);
-  for(let ch=0;ch<2;ch++){
+  for(let ch=0; ch<2; ch++){
     const d = buf.getChannelData(ch);
-    for(let i=0;i<len;i++){
-      d[i] = (Math.random()*2-1) * Math.pow(1-i/len, decay);
+    for(let i=0; i<len; i++){
+      // Metallic modulation: multiplying by a high-freq sine creates that "machine chamber" ring
+      d[i] = (Math.random()*2-1) * Math.pow(1-i/len, decay) * Math.sin(i * 0.05);
     }
   }
   return buf;
@@ -114,115 +115,93 @@ function buildImpulseResponse(duration, decay){
 function setupAudio(){
   audioCtx = new (window.AudioContext||window.webkitAudioContext)();
   masterGain = audioCtx.createGain();
-  masterGain.gain.value = 1.4;
+  masterGain.gain.value = 1.2;
   masterGain.connect(audioCtx.destination);
 
-  // Effect chain input point
   effectChainInput = audioCtx.createGain();
-  effectChainInput.gain.value = 1;
 
-  // Bass boost — heavy +12dB at 75Hz
+  // 1. +12dB Bass Boost at 75Hz (Chest-resonating rumble)
   const bass = audioCtx.createBiquadFilter();
   bass.type = 'peaking';
   bass.frequency.value = 75;
-  bass.Q.value = 0.7;
+  bass.Q.value = 1.0;
   bass.gain.value = 12;
 
-  // Low-mid warmth +4dB at 280Hz
-  const warmth = audioCtx.createBiquadFilter();
-  warmth.type = 'peaking';
-  warmth.frequency.value = 280;
-  warmth.Q.value = 1.2;
-  warmth.gain.value = 4;
-
-  // High cut — roll off harshness above 2.8kHz
+  // 2. High frequency roll-off at 2.8kHz (Hollow / Ancient)
   const highCut = audioCtx.createBiquadFilter();
   highCut.type = 'lowpass';
   highCut.frequency.value = 2800;
-  highCut.Q.value = 0.6;
+  highCut.Q.value = 0.7;
 
-  // Large metallic reverb (5 second tail, slow decay)
+  // 3. 5-Second Metallic Reverb
   const convolver = audioCtx.createConvolver();
-  convolver.buffer = buildImpulseResponse(5, 1.8);
+  convolver.buffer = buildImpulseResponse(5, 2.0);
 
-  // Dry/wet split
-  const dryGain = audioCtx.createGain(); dryGain.gain.value = 0.45;
-  const wetGain = audioCtx.createGain(); wetGain.gain.value = 0.65;
+  const dryGain = audioCtx.createGain(); dryGain.gain.value = 0.5;
+  const wetGain = audioCtx.createGain(); wetGain.gain.value = 0.6;
 
-  // Chain: input → bass → warmth → highCut → split
+  // Routing the Chain
   effectChainInput.connect(bass);
-  bass.connect(warmth);
-  warmth.connect(highCut);
+  bass.connect(highCut);
+  
+  // Split for reverb
   highCut.connect(dryGain);
   highCut.connect(convolver);
-  dryGain.connect(masterGain);
+  
   convolver.connect(wetGain);
+  
+  dryGain.connect(masterGain);
   wetGain.connect(masterGain);
 
-  // ── Deep drone background (starts with first speech) ──
-  function makeDrone(freq, vol, type='sine'){
+  // 4. Deep Sub-Bass Drone (48Hz + Harmonics)
+  function makeDrone(freq, vol){
     const osc = audioCtx.createOscillator();
-    const g   = audioCtx.createGain();
-    const lfo = audioCtx.createOscillator();
-    const lfoG= audioCtx.createGain();
-    osc.type  = type;
+    const g = audioCtx.createGain();
+    const env = audioCtx.createGain();
+    osc.type = 'sine';
     osc.frequency.value = freq;
-    lfo.frequency.value = 0.12;
-    lfoG.gain.value = 3;
-    lfo.connect(lfoG);
-    lfoG.connect(osc.frequency);
-    const env = audioCtx.createGain(); env.gain.value = 0;
+    env.gain.value = 0;
     osc.connect(g); g.connect(env); env.connect(masterGain);
-    osc.start(); lfo.start();
+    osc.start();
     g.gain.value = vol;
     return env;
   }
-  window._drone1 = makeDrone(48,  0.12);   // sub-bass fundamental
-  window._drone2 = makeDrone(96,  0.06);   // octave
-  window._drone3 = makeDrone(144, 0.03);   // fifth
+  window._drone1 = makeDrone(48, 0.15); 
+  window._drone2 = makeDrone(96, 0.05);
   window._droneRamp = () => {
     if(droneStarted) return; droneStarted=true;
-    [window._drone1,window._drone2,window._drone3].forEach(d=>{
-      d.gain.setTargetAtTime(1, audioCtx.currentTime, 2.5);
+    const now = audioCtx.currentTime;
+    [window._drone1, window._drone2].forEach(d => {
+        d.gain.setTargetAtTime(1, now, 3.0); // Slow fade-in
     });
   };
 }
 
-// Speak one line: fetch Brian voice → pitch down → reverb → play
 async function speakWithEffects(text){
   const url = `https://api.streamelements.com/kappa/v2/speech?voice=Brian&text=${encodeURIComponent(text)}`;
   try{
     const res = await fetch(url);
-    if(!res.ok) throw new Error('fetch failed');
     const buf = await res.arrayBuffer();
     const decoded = await audioCtx.decodeAudioData(buf);
 
     return new Promise(resolve=>{
       const src = audioCtx.createBufferSource();
       src.buffer = decoded;
-      src.playbackRate.value = 0.82; // pitch down ~3 semitones + slower pace
+      // 5. Pitch Down 18% (playbackRate 0.82)
+      src.playbackRate.value = 0.82; 
       src.connect(effectChainInput);
       src.start(0);
       src.onended = resolve;
-      // Safety timeout
-      setTimeout(resolve, decoded.duration*1300 + 3000);
     });
   }catch(err){
-    // Fallback to Web Speech API (no effects possible, but at least talks)
-    console.warn('StreamElements failed, using Web Speech:', err);
-    return new Promise(resolve=>{
-      if(!window.speechSynthesis){resolve();return;}
-      const u = new SpeechSynthesisUtterance(text);
-      u.pitch=0.1; u.rate=0.72; u.volume=1;
-      u.onend=resolve; u.onerror=resolve;
-      window.speechSynthesis.speak(u);
-    });
+    console.warn('Voice API Error:', err);
+    return new Promise(r => setTimeout(r, 2000));
   }
 }
 
-// ═══════════════════════════════════════════════════════
-//  PARTICLE FACE
-// ═══════════════════════════════════════════════════════
+// ———————————————————————————————————————————————————————
+// PARTICLE FACE 
+// ———————————————————————————————————————————————————————
 let scene,camera,renderer,faceMesh,orbitMesh,fPos,fTgt,fCol,fReg;
 const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 const FACE_N=isMobile?6000:10000,ORBIT_N=280;
@@ -379,9 +358,9 @@ function animateScene(){
   renderer.render(scene,camera);
 }
 
-// ═══════════════════════════════════════════════════════
-//  SEQUENCE  (async — each line waits for audio to finish)
-// ═══════════════════════════════════════════════════════
+// ———————————————————————————————————————————————————————
+// SEQUENCE 
+// ———————————————————————————————————————————————————————
 const lines=[
   {txt:'Robert.',                                    pause:2000},
   {txt:'You have carried more than was required.',   pause:1400},
@@ -407,7 +386,8 @@ function showCaption(txt){
 }
 
 async function runSequence(){
-  await sleep(600); // brief pause after click
+  await sleep(600); 
+  if(window._droneRamp) window._droneRamp(); // Start drone with sequence
   for(const line of lines){
     showCaption(line.txt);
     speaking=true;
@@ -419,9 +399,9 @@ async function runSequence(){
   ctextEl.style.opacity=0;
 }
 
-// ═══════════════════════════════════════════════════════
-//  INTRO
-// ═══════════════════════════════════════════════════════
+// ———————————————————————————————————————————————————————
+// INTRO 
+// ———————————————————————————————————————————————————————
 const introEl=document.getElementById('intro');
 const statusEl=document.getElementById('statusLine');
 const enterBtn=document.getElementById('enter');
@@ -438,14 +418,11 @@ function handleEnter(){
   if(started)return;started=true;
   clearInterval(stInt);
 
-  // 1. Fade intro (always first)
   introEl.style.opacity='0';
   setTimeout(()=>{introEl.style.display='none';},1600);
 
-  // 2. Init audio context INSIDE user gesture (required by browsers)
   try{ setupAudio(); }catch(e){ console.warn('Audio setup failed:',e); }
 
-  // 3. Init visuals
   try{
     if(typeof THREE==='undefined') throw new Error('THREE.js not loaded');
     initScene();
@@ -464,8 +441,6 @@ function handleEnter(){
     document.body.appendChild(err);
   }
 
-  // 4. Start drone + voice sequence
-  if(window._droneRamp) window._droneRamp();
   runSequence();
 }
 
