@@ -2,594 +2,482 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>INTERFACE — PRESENCE</title>
+<title>INTERFACE</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-
 *{margin:0;padding:0;box-sizing:border-box;}
 html,body{width:100%;height:100%;background:#000;overflow:hidden;}
-body{font-family:'Share Tech Mono','Courier New',monospace;}
-
-/* ── Matrix Rain Canvas ── */
+body{font-family:'Courier New',Courier,monospace;}
 #rain{position:fixed;inset:0;z-index:0;}
+#vignette{position:fixed;inset:0;z-index:5;pointer-events:none;
+  background:radial-gradient(ellipse 80% 80% at 50% 50%,transparent 40%,rgba(0,0,0,0.72) 100%);}
+#scan{position:fixed;inset:0;z-index:6;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.07) 3px,rgba(0,0,0,0.07) 4px);}
 
-/* ── Scanlines ── */
-#scan{
-  position:fixed;inset:0;z-index:6;pointer-events:none;
-  background:repeating-linear-gradient(
-    0deg,transparent,transparent 3px,
-    rgba(0,0,0,0.06) 3px,rgba(0,0,0,0.06) 4px
-  );
-}
-
-/* ── Vignette ── */
-#vignette{
-  position:fixed;inset:0;z-index:5;pointer-events:none;
-  background:radial-gradient(ellipse 80% 80% at 50% 50%,transparent 40%,rgba(0,0,0,0.7) 100%);
-}
-
-/* ── Intro Screen ── */
-#intro{
-  position:fixed;inset:0;z-index:200;
+/* INTRO */
+#intro{position:fixed;inset:0;z-index:200;
   background:radial-gradient(ellipse 100% 100% at 50% 50%,rgba(0,4,0,0.97) 0%,#000 100%);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
-  transition:opacity 1.6s ease;
-}
-#intro.fade{opacity:0;pointer-events:none;}
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:opacity 1.5s ease;}
+.isub{font-size:9px;letter-spacing:10px;color:rgba(0,255,65,0.4);margin-bottom:38px;
+  animation:gp 3.5s ease-in-out infinite;}
+@keyframes gp{0%,100%{opacity:.35}50%{opacity:1}}
+.ititle{font-size:clamp(11px,2.8vw,15px);letter-spacing:9px;color:rgba(255,255,255,0.72);margin-bottom:52px;}
+#enter{padding:18px 54px;border:1px solid rgba(255,255,255,0.42);background:transparent;
+  color:rgba(255,255,255,0.9);letter-spacing:6px;font-size:10px;cursor:pointer;
+  font-family:inherit;outline:none;-webkit-tap-highlight-color:transparent;
+  transition:border-color .4s,box-shadow .4s;
+  min-width:220px;min-height:54px;
+  display:flex;align-items:center;justify-content:center;
+  touch-action:manipulation;}
+#enter:hover,#enter:active{border-color:rgba(255,255,255,0.95);color:#fff;
+  box-shadow:0 0 36px rgba(255,255,255,0.07);}
+.istatus{margin-top:46px;font-size:8px;letter-spacing:5px;color:rgba(0,255,65,0.45);}
+.cc{position:absolute;width:40px;height:40px;border-color:rgba(255,255,255,0.07);border-style:solid;border-width:0;}
+.tl{top:32px;left:32px;border-top-width:1px;border-left-width:1px;}
+.br2{bottom:32px;right:32px;border-bottom-width:1px;border-right-width:1px;}
 
-.i-top{
-  font-size:9px;letter-spacing:12px;color:rgba(0,255,65,0.35);
-  margin-bottom:48px;
-  animation:topPulse 4s ease-in-out infinite;
-}
-@keyframes topPulse{0%,100%{opacity:.35}50%{opacity:.9}}
+/* CAPTION */
+#caption{position:fixed;bottom:9%;left:0;right:0;text-align:center;z-index:50;pointer-events:none;padding:0 6%;}
+#ctext{color:#fff;font-size:clamp(14px,4vw,24px);letter-spacing:2px;line-height:1.75;
+  opacity:0;transition:opacity .7s ease;
+  text-shadow:0 0 8px rgba(255,255,255,1),0 0 22px rgba(255,255,255,0.55),0 0 55px rgba(200,220,255,0.22);}
 
-.i-title{
-  font-size:clamp(11px,3vw,16px);letter-spacing:10px;
-  color:rgba(255,255,255,0.75);margin-bottom:64px;
-}
-
-#enter{
-  padding:16px 52px;
-  border:1px solid rgba(255,255,255,0.45);
-  background:transparent;color:rgba(255,255,255,0.9);
-  letter-spacing:6px;font-size:10px;cursor:pointer;
-  font-family:inherit;outline:none;position:relative;overflow:hidden;
-  transition:all 0.5s;
-}
-#enter::after{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,0.07) 50%,transparent 70%);
-  transform:translateX(-120%);transition:transform 0.8s;
-}
-#enter:hover::after{transform:translateX(120%);}
-#enter:hover{
-  border-color:rgba(255,255,255,0.95);color:#fff;
-  box-shadow:0 0 40px rgba(255,255,255,0.08),0 0 80px rgba(255,255,255,0.03);
-}
-#enter:active{background:rgba(255,255,255,0.05);}
-
-.i-status{
-  margin-top:52px;font-size:8px;letter-spacing:5px;
-  color:rgba(0,255,65,0.45);height:18px;
-  animation:blink 1.2s step-end infinite;
-}
-@keyframes blink{0%,100%{opacity:.45}50%{opacity:.9}}
-
-.i-corners{
-  position:absolute;
-  width:calc(100% - 80px);height:calc(100% - 80px);
-  border-color:rgba(255,255,255,0.06);
-  border-style:solid;border-width:0;
-  pointer-events:none;
-}
-.i-corners.tl{top:40px;left:40px;border-top-width:1px;border-left-width:1px;}
-.i-corners.br{bottom:40px;right:40px;border-bottom-width:1px;border-right-width:1px;}
-
-/* ── Text Display ── */
-#caption{
-  position:fixed;bottom:9%;left:0;right:0;
-  text-align:center;z-index:50;pointer-events:none;
-  padding:0 6%;
-}
-#captionText{
-  display:inline;
-  color:#fff;
-  font-size:clamp(15px,4.2vw,26px);
-  letter-spacing:2px;line-height:1.7;
-  opacity:0;transition:opacity 0.7s ease;
-  text-shadow:
-    0 0 8px rgba(255,255,255,1),
-    0 0 24px rgba(255,255,255,0.6),
-    0 0 60px rgba(200,220,255,0.25);
-}
-
-/* ── Data Lines (ambient corner UI) ── */
-.corner-hud{
-  position:fixed;z-index:10;pointer-events:none;
-  font-size:7px;letter-spacing:3px;color:rgba(255,255,255,0.12);
-  line-height:2;
-}
-.corner-hud.bl{bottom:24px;left:24px;}
-.corner-hud.br{bottom:24px;right:24px;text-align:right;}
+/* CORNER HUD */
+.chud{position:fixed;z-index:10;pointer-events:none;font-size:7px;letter-spacing:3px;
+  color:rgba(255,255,255,0.1);line-height:2;}
+.hudbl{bottom:20px;left:20px;}.hudbr{bottom:20px;right:20px;text-align:right;}
 </style>
 </head>
 <body>
-
 <canvas id="rain"></canvas>
 <div id="vignette"></div>
 <div id="scan"></div>
+<div class="chud hudbl">NEURAL/ACTIVE<br>SYS.PRESENCE<br>▸ INTERFACE</div>
+<div class="chud hudbr">SEQUENCE/INIT<br>PARTICLE.MESH<br>VOICE ▸ DEEP</div>
 
-<!-- Corner HUD decorations -->
-<div class="corner-hud bl">
-  NEURAL/ACTIVE<br>
-  SYS.PRESENCE.v2<br>
-  ▸ INTERFACE
-</div>
-<div class="corner-hud br">
-  SEQUENCE/INIT<br>
-  PARTICLE.MESH<br>
-  VOICE ▸ DEEP
-</div>
-
-<!-- Intro -->
 <div id="intro">
-  <div class="i-corners tl"></div>
-  <div class="i-corners br"></div>
-  <div class="i-top">SYSTEM ONLINE</div>
-  <div class="i-title">I N T E R F A C E</div>
-  <button id="enter">INITIATE SEQUENCE</button>
-  <div class="i-status" id="statusLine">AWAITING INPUT</div>
+  <div class="cc tl"></div><div class="cc br2"></div>
+  <div class="isub">SYSTEM ONLINE</div>
+  <div class="ititle">I N T E R F A C E</div>
+  <button id="enter" type="button">INITIATE SEQUENCE</button>
+  <div class="istatus" id="statusLine">AWAITING INPUT</div>
 </div>
 
-<!-- Caption -->
-<div id="caption"><span id="captionText"></span></div>
+<div id="caption"><span id="ctext"></span></div>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════
 //  MATRIX RAIN
 // ═══════════════════════════════════════════════════════
-const rainCanvas = document.getElementById('rain');
-const rCtx = rainCanvas.getContext('2d');
-const KANA = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホ0101011010010110100101';
-let rCols, rDrops, rainAlpha = 1;
-const rSize = 13;
-
+const rainCv=document.getElementById('rain'),rCtx=rainCv.getContext('2d');
+const KANA='アイウエオカキクケコサシスセソ0110100101';
+let rCols,rDrops,rainAlpha=1;const rSz=13;
 function resizeRain(){
-  rainCanvas.width  = window.innerWidth;
-  rainCanvas.height = window.innerHeight;
-  rCols  = Math.floor(rainCanvas.width / rSize);
-  rDrops = Array.from({length:rCols},()=>Math.random()*-80);
+  rainCv.width=window.innerWidth;rainCv.height=window.innerHeight;
+  rCols=Math.floor(rainCv.width/rSz);
+  rDrops=Array.from({length:rCols},()=>Math.random()*-60);
 }
-resizeRain();
-window.addEventListener('resize', resizeRain);
-
-function drawRain(){
-  rCtx.fillStyle = `rgba(0,0,0,${0.055 + (1-rainAlpha)*0.18})`;
-  rCtx.fillRect(0,0,rainCanvas.width,rainCanvas.height);
-  rCtx.font = `${rSize}px monospace`;
+resizeRain();window.addEventListener('resize',resizeRain);
+(function loop(){
+  rCtx.fillStyle=`rgba(0,0,0,${0.055+(1-rainAlpha)*0.2})`;
+  rCtx.fillRect(0,0,rainCv.width,rainCv.height);
+  rCtx.font=rSz+'px monospace';
   for(let i=0;i<rCols;i++){
-    const bright = Math.random()>.94;
-    const a = rainAlpha * (bright ? 1 : 0.65);
-    rCtx.fillStyle = bright
-      ? `rgba(180,255,190,${a})`
-      : `rgba(0,${Math.floor(140+Math.random()*100)},20,${a})`;
-    rCtx.fillText(KANA[Math.floor(Math.random()*KANA.length)], i*rSize, rDrops[i]*rSize);
-    if(rDrops[i]*rSize > rainCanvas.height && Math.random()>.975) rDrops[i]=0;
+    const bright=Math.random()>.94,a=rainAlpha*(bright?1:.65);
+    rCtx.fillStyle=bright?`rgba(200,255,200,${a})`:`rgba(0,${Math.floor(130+Math.random()*110)},20,${a})`;
+    rCtx.fillText(KANA[Math.floor(Math.random()*KANA.length)],i*rSz,rDrops[i]*rSz);
+    if(rDrops[i]*rSz>rainCv.height&&Math.random()>.975)rDrops[i]=0;
     rDrops[i]++;
   }
-  requestAnimationFrame(drawRain);
-}
-drawRain();
+  requestAnimationFrame(loop);
+})();
 
 // ═══════════════════════════════════════════════════════
-//  THREE.JS PARTICLE FACE
+//  WEB AUDIO ENGINE  — deep reverb + bass + pitch down
 // ═══════════════════════════════════════════════════════
-let scene, camera, renderer, faceMesh, orbitMesh;
-let fPos, fTgt, fCol, fReg; // Float32/Uint8 arrays
-const isMobile  = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-const FACE_N    = isMobile ? 7000 : 11000;
-const ORBIT_N   = 300;
+let audioCtx, masterGain, effectChainInput, droneStarted=false;
 
-// ── Draw face onto offscreen canvas, sample bright pixels
-function buildFacePoints(){
-  const W=520, H=640;
-  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
-  const g=cv.getContext('2d');
-
-  g.fillStyle='#000'; g.fillRect(0,0,W,H);
-
-  const S=(fn)=>{g.beginPath();fn();g.stroke();};
-  const F=(fn)=>{g.beginPath();fn();g.fill();};
-
-  // HEAD
-  g.strokeStyle='rgba(255,255,255,0.95)'; g.lineWidth=4.5;
-  S(()=>g.ellipse(260,300,160,205,0,0,Math.PI*2));
-
-  // Temple detail lines
-  g.strokeStyle='rgba(255,255,255,0.3)'; g.lineWidth=1.5;
-  S(()=>{g.moveTo(104,195);g.quadraticCurveTo(92,300,106,390);});
-  S(()=>{g.moveTo(416,195);g.quadraticCurveTo(428,300,414,390);});
-
-  // BROWS
-  g.strokeStyle='rgba(255,255,255,0.80)'; g.lineWidth=4;
-  S(()=>{g.moveTo(130,214);g.quadraticCurveTo(175,200,218,215);});
-  S(()=>{g.moveTo(302,215);g.quadraticCurveTo(345,200,390,214);});
-
-  // EYES – sockets
-  g.strokeStyle='rgba(255,255,255,0.88)'; g.lineWidth=3;
-  S(()=>g.ellipse(172,248,42,24,0,0,Math.PI*2));
-  S(()=>g.ellipse(348,248,42,24,0,0,Math.PI*2));
-
-  // Eye – iris rings
-  g.strokeStyle='rgba(140,200,255,0.95)'; g.lineWidth=2;
-  S(()=>g.arc(172,248,22,0,Math.PI*2));
-  S(()=>g.arc(348,248,22,0,Math.PI*2));
-
-  // Eye – pupils (filled)
-  g.fillStyle='rgba(255,255,255,1)';
-  F(()=>g.arc(172,248,11,0,Math.PI*2));
-  F(()=>g.arc(348,248,11,0,Math.PI*2));
-
-  // Eye – inner glow ring
-  g.strokeStyle='rgba(100,180,255,0.6)'; g.lineWidth=1;
-  S(()=>g.arc(172,248,30,0,Math.PI*2));
-  S(()=>g.arc(348,248,30,0,Math.PI*2));
-
-  // NOSE bridge
-  g.strokeStyle='rgba(255,255,255,0.55)'; g.lineWidth=2.5;
-  S(()=>{g.moveTo(244,272);g.lineTo(228,342);g.lineTo(220,360);});
-  S(()=>{g.moveTo(276,272);g.lineTo(292,342);g.lineTo(300,360);});
-  S(()=>{g.moveTo(220,360);g.quadraticCurveTo(260,372,300,360);});
-  // Nostrils
-  g.strokeStyle='rgba(255,255,255,0.65)'; g.lineWidth=2;
-  S(()=>g.ellipse(222,364,16,9,-0.35,0,Math.PI*2));
-  S(()=>g.ellipse(298,364,16,9, 0.35,0,Math.PI*2));
-
-  // MOUTH – upper lip
-  g.strokeStyle='rgba(255,255,255,0.82)'; g.lineWidth=3;
-  S(()=>{
-    g.moveTo(190,412);
-    g.quadraticCurveTo(224,400,260,403);
-    g.quadraticCurveTo(296,400,330,412);
-  });
-  // lower lip
-  S(()=>{g.moveTo(190,412);g.quadraticCurveTo(260,442,330,412);});
-  // mouth corners
-  g.strokeStyle='rgba(255,255,255,0.35)'; g.lineWidth=1.5;
-  S(()=>{g.moveTo(190,412);g.lineTo(176,415);});
-  S(()=>{g.moveTo(330,412);g.lineTo(344,415);});
-
-  // JAW
-  g.strokeStyle='rgba(255,255,255,0.5)'; g.lineWidth=2.2;
-  S(()=>{
-    g.moveTo(144,368);
-    g.quadraticCurveTo(130,445,170,472);
-    g.quadraticCurveTo(210,488,260,490);
-    g.quadraticCurveTo(310,488,350,472);
-    g.quadraticCurveTo(390,445,376,368);
-  });
-
-  // Cheekbones
-  g.strokeStyle='rgba(255,255,255,0.22)'; g.lineWidth=1.5;
-  S(()=>{g.moveTo(110,290);g.quadraticCurveTo(128,336,152,352);});
-  S(()=>{g.moveTo(410,290);g.quadraticCurveTo(392,336,368,352);});
-
-  // ── FOREHEAD CROWN / CIRCUIT ──
-  g.strokeStyle='rgba(255,255,255,0.55)'; g.lineWidth=1.8;
-  // center crown arc
-  S(()=>g.arc(260,100,26,Math.PI*1.1,Math.PI*1.9));
-  S(()=>{g.moveTo(246,88);g.lineTo(246,64);});
-  S(()=>{g.moveTo(260,80);g.lineTo(260,55);});
-  S(()=>{g.moveTo(274,88);g.lineTo(274,64);});
-  // center forehead data nodes
-  g.fillStyle='rgba(255,255,255,0.7)';
-  [[-18,120],[0,105],[18,120]].forEach(([dx,dy])=>{
-    F(()=>g.arc(260+dx,dy,3,0,Math.PI*2));
-  });
-
-  // ── SIDE CIRCUIT PANELS ──
-  g.strokeStyle='rgba(255,255,255,0.4)'; g.lineWidth=1.2;
-  const drawCircuit=(x0,dir,rows)=>{
-    rows.forEach(y=>{
-      S(()=>{
-        g.moveTo(x0,y);
-        g.lineTo(x0+dir*20,y);
-        g.lineTo(x0+dir*26,y+10);
-        g.lineTo(x0+dir*42,y+10);
-      });
-      g.fillStyle='rgba(255,255,255,0.65)';
-      F(()=>g.arc(x0,y,3.5,0,Math.PI*2));
-      // small tick
-      g.strokeStyle='rgba(255,255,255,0.3)'; g.lineWidth=1;
-      S(()=>{g.moveTo(x0+dir*42,y+10);g.lineTo(x0+dir*52,y+10);});
-      g.strokeStyle='rgba(255,255,255,0.4)'; g.lineWidth=1.2;
-    });
-  };
-  drawCircuit(68,  1,[135,188,241,294,347]);
-  drawCircuit(452,-1,[135,188,241,294,347]);
-
-  // Forehead mid-line detail
-  g.strokeStyle='rgba(255,255,255,0.3)'; g.lineWidth=1;
-  S(()=>{g.moveTo(225,148);g.lineTo(225,170);g.lineTo(260,182);g.lineTo(295,170);g.lineTo(295,148);});
-
-  // ── SAMPLE PIXELS ──
-  const d = g.getImageData(0,0,W,H).data;
-  const pts=[];
-  for(let y=0;y<H;y++){
-    for(let x=0;x<W;x++){
-      const i=(y*W+x)*4;
-      if(d[i]>70){
-        // Determine region (0=face,1=mouth,2=eye,3=circuit)
-        let reg=0;
-        if(y>390&&y<460&&x>175&&x<345) reg=1; // mouth
-        if(y>220&&y<285&&((x>125&&x<220)||(x>300&&x<395))) reg=2; // eyes
-        if(x<90||x>430) reg=3; // side circuits
-        pts.push((x/W-.5)*12, -(y/H-.5)*12, reg);
-      }
+function buildImpulseResponse(duration, decay){
+  const len = audioCtx.sampleRate * duration;
+  const buf = audioCtx.createBuffer(2, len, audioCtx.sampleRate);
+  for(let ch=0;ch<2;ch++){
+    const d = buf.getChannelData(ch);
+    for(let i=0;i<len;i++){
+      d[i] = (Math.random()*2-1) * Math.pow(1-i/len, decay);
     }
   }
-  return pts; // [x, y, reg, x, y, reg, ...]
+  return buf;
+}
+
+function setupAudio(){
+  audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = 1.4;
+  masterGain.connect(audioCtx.destination);
+
+  // Effect chain input point
+  effectChainInput = audioCtx.createGain();
+  effectChainInput.gain.value = 1;
+
+  // Bass boost — heavy +12dB at 75Hz
+  const bass = audioCtx.createBiquadFilter();
+  bass.type = 'peaking';
+  bass.frequency.value = 75;
+  bass.Q.value = 0.7;
+  bass.gain.value = 12;
+
+  // Low-mid warmth +4dB at 280Hz
+  const warmth = audioCtx.createBiquadFilter();
+  warmth.type = 'peaking';
+  warmth.frequency.value = 280;
+  warmth.Q.value = 1.2;
+  warmth.gain.value = 4;
+
+  // High cut — roll off harshness above 2.8kHz
+  const highCut = audioCtx.createBiquadFilter();
+  highCut.type = 'lowpass';
+  highCut.frequency.value = 2800;
+  highCut.Q.value = 0.6;
+
+  // Large metallic reverb (5 second tail, slow decay)
+  const convolver = audioCtx.createConvolver();
+  convolver.buffer = buildImpulseResponse(5, 1.8);
+
+  // Dry/wet split
+  const dryGain = audioCtx.createGain(); dryGain.gain.value = 0.45;
+  const wetGain = audioCtx.createGain(); wetGain.gain.value = 0.65;
+
+  // Chain: input → bass → warmth → highCut → split
+  effectChainInput.connect(bass);
+  bass.connect(warmth);
+  warmth.connect(highCut);
+  highCut.connect(dryGain);
+  highCut.connect(convolver);
+  dryGain.connect(masterGain);
+  convolver.connect(wetGain);
+  wetGain.connect(masterGain);
+
+  // ── Deep drone background (starts with first speech) ──
+  function makeDrone(freq, vol, type='sine'){
+    const osc = audioCtx.createOscillator();
+    const g   = audioCtx.createGain();
+    const lfo = audioCtx.createOscillator();
+    const lfoG= audioCtx.createGain();
+    osc.type  = type;
+    osc.frequency.value = freq;
+    lfo.frequency.value = 0.12;
+    lfoG.gain.value = 3;
+    lfo.connect(lfoG);
+    lfoG.connect(osc.frequency);
+    const env = audioCtx.createGain(); env.gain.value = 0;
+    osc.connect(g); g.connect(env); env.connect(masterGain);
+    osc.start(); lfo.start();
+    g.gain.value = vol;
+    return env;
+  }
+  window._drone1 = makeDrone(48,  0.12);   // sub-bass fundamental
+  window._drone2 = makeDrone(96,  0.06);   // octave
+  window._drone3 = makeDrone(144, 0.03);   // fifth
+  window._droneRamp = () => {
+    if(droneStarted) return; droneStarted=true;
+    [window._drone1,window._drone2,window._drone3].forEach(d=>{
+      d.gain.setTargetAtTime(1, audioCtx.currentTime, 2.5);
+    });
+  };
+}
+
+// Speak one line: fetch Brian voice → pitch down → reverb → play
+async function speakWithEffects(text){
+  const url = `https://api.streamelements.com/kappa/v2/speech?voice=Brian&text=${encodeURIComponent(text)}`;
+  try{
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('fetch failed');
+    const buf = await res.arrayBuffer();
+    const decoded = await audioCtx.decodeAudioData(buf);
+
+    return new Promise(resolve=>{
+      const src = audioCtx.createBufferSource();
+      src.buffer = decoded;
+      src.playbackRate.value = 0.82; // pitch down ~3 semitones + slower pace
+      src.connect(effectChainInput);
+      src.start(0);
+      src.onended = resolve;
+      // Safety timeout
+      setTimeout(resolve, decoded.duration*1300 + 3000);
+    });
+  }catch(err){
+    // Fallback to Web Speech API (no effects possible, but at least talks)
+    console.warn('StreamElements failed, using Web Speech:', err);
+    return new Promise(resolve=>{
+      if(!window.speechSynthesis){resolve();return;}
+      const u = new SpeechSynthesisUtterance(text);
+      u.pitch=0.1; u.rate=0.72; u.volume=1;
+      u.onend=resolve; u.onerror=resolve;
+      window.speechSynthesis.speak(u);
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  PARTICLE FACE
+// ═══════════════════════════════════════════════════════
+let scene,camera,renderer,faceMesh,orbitMesh,fPos,fTgt,fCol,fReg;
+const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+const FACE_N=isMobile?6000:10000,ORBIT_N=280;
+
+function buildFace(){
+  const W=480,H=600,cv=document.createElement('canvas');
+  cv.width=W;cv.height=H;const g=cv.getContext('2d');
+  g.fillStyle='#000';g.fillRect(0,0,W,H);
+  const S=fn=>{g.beginPath();fn();g.stroke();};
+  const F=fn=>{g.beginPath();fn();g.fill();};
+  g.strokeStyle='rgba(255,255,255,0.95)';g.lineWidth=5;
+  S(()=>g.ellipse(240,290,150,195,0,0,Math.PI*2));
+  g.strokeStyle='rgba(255,255,255,0.25)';g.lineWidth=1.5;
+  S(()=>{g.moveTo(94,185);g.quadraticCurveTo(82,290,97,378);});
+  S(()=>{g.moveTo(386,185);g.quadraticCurveTo(398,290,383,378);});
+  g.strokeStyle='rgba(255,255,255,0.82)';g.lineWidth=4;
+  S(()=>{g.moveTo(116,204);g.quadraticCurveTo(160,190,202,205);});
+  S(()=>{g.moveTo(278,205);g.quadraticCurveTo(320,190,364,204);});
+  g.strokeStyle='rgba(255,255,255,0.88)';g.lineWidth=3;
+  S(()=>g.ellipse(158,238,40,23,0,0,Math.PI*2));
+  S(()=>g.ellipse(322,238,40,23,0,0,Math.PI*2));
+  g.strokeStyle='rgba(120,190,255,0.95)';g.lineWidth=2;
+  S(()=>g.arc(158,238,20,0,Math.PI*2));
+  S(()=>g.arc(322,238,20,0,Math.PI*2));
+  g.fillStyle='#fff';
+  F(()=>g.arc(158,238,10,0,Math.PI*2));
+  F(()=>g.arc(322,238,10,0,Math.PI*2));
+  g.strokeStyle='rgba(80,160,255,0.4)';g.lineWidth=1.2;
+  S(()=>g.arc(158,238,29,0,Math.PI*2));
+  S(()=>g.arc(322,238,29,0,Math.PI*2));
+  g.strokeStyle='rgba(255,255,255,0.52)';g.lineWidth=2.2;
+  S(()=>{g.moveTo(228,262);g.lineTo(215,330);g.lineTo(208,348);});
+  S(()=>{g.moveTo(252,262);g.lineTo(265,330);g.lineTo(272,348);});
+  S(()=>{g.moveTo(208,348);g.quadraticCurveTo(240,360,272,348);});
+  g.strokeStyle='rgba(255,255,255,0.6)';g.lineWidth=2;
+  S(()=>g.ellipse(210,354,14,8,-0.35,0,Math.PI*2));
+  S(()=>g.ellipse(270,354,14,8,0.35,0,Math.PI*2));
+  g.strokeStyle='rgba(255,255,255,0.82)';g.lineWidth=3;
+  S(()=>{g.moveTo(176,400);g.quadraticCurveTo(208,390,240,392);g.quadraticCurveTo(272,390,304,400);});
+  S(()=>{g.moveTo(176,400);g.quadraticCurveTo(240,428,304,400);});
+  g.strokeStyle='rgba(255,255,255,0.3)';g.lineWidth=1.4;
+  S(()=>{g.moveTo(176,400);g.lineTo(163,403);});
+  S(()=>{g.moveTo(304,400);g.lineTo(317,403);});
+  g.strokeStyle='rgba(255,255,255,0.48)';g.lineWidth=2.2;
+  S(()=>{g.moveTo(132,356);g.quadraticCurveTo(118,432,156,460);
+    g.quadraticCurveTo(196,478,240,480);g.quadraticCurveTo(284,478,324,460);
+    g.quadraticCurveTo(362,432,348,356);});
+  g.strokeStyle='rgba(255,255,255,0.18)';g.lineWidth=1.5;
+  S(()=>{g.moveTo(100,278);g.quadraticCurveTo(118,324,140,342);});
+  S(()=>{g.moveTo(380,278);g.quadraticCurveTo(362,324,340,342);});
+  g.strokeStyle='rgba(255,255,255,0.58)';g.lineWidth=2;
+  S(()=>g.arc(240,97,24,Math.PI*1.1,Math.PI*1.9));
+  g.lineWidth=1.6;
+  S(()=>{g.moveTo(228,86);g.lineTo(228,62);});
+  S(()=>{g.moveTo(240,78);g.lineTo(240,52);});
+  S(()=>{g.moveTo(252,86);g.lineTo(252,62);});
+  g.fillStyle='rgba(255,255,255,0.72)';
+  [[-18,118],[0,104],[18,118]].forEach(([dx,dy])=>{F(()=>g.arc(240+dx,dy,3,0,Math.PI*2));});
+  g.strokeStyle='rgba(255,255,255,0.26)';g.lineWidth=1;
+  S(()=>{g.moveTo(214,142);g.lineTo(214,163);g.lineTo(240,174);g.lineTo(266,163);g.lineTo(266,142);});
+  [[65,1],[415,-1]].forEach(([x0,dir])=>{
+    [130,182,234,286,338].forEach(y=>{
+      g.strokeStyle='rgba(255,255,255,0.38)';g.lineWidth=1.2;
+      S(()=>{g.moveTo(x0,y);g.lineTo(x0+dir*18,y);g.lineTo(x0+dir*24,y+10);g.lineTo(x0+dir*40,y+10);});
+      g.fillStyle='rgba(255,255,255,0.65)';F(()=>g.arc(x0,y,3.2,0,Math.PI*2));
+      g.strokeStyle='rgba(255,255,255,0.2)';
+      S(()=>{g.moveTo(x0+dir*40,y+10);g.lineTo(x0+dir*50,y+10);});
+    });
+  });
+  const px=g.getImageData(0,0,W,H).data,pts=[];
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+    const i=(y*W+x)*4;
+    if(px[i]>65){
+      let reg=0;
+      if(y>380&&y<448&&x>162&&x<318) reg=1;
+      if(y>210&&y<272&&((x>112&&x<204)||(x>276&&x<368))) reg=2;
+      if(x<88||x>392) reg=3;
+      pts.push((x/W-.5)*12,-(y/H-.5)*12,reg);
+    }
+  }
+  return pts;
 }
 
 function initScene(){
-  scene  = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(55,window.innerWidth/window.innerHeight,0.1,1000);
-  camera.position.z = 14;
-
-  renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+  scene=new THREE.Scene();
+  camera=new THREE.PerspectiveCamera(55,window.innerWidth/window.innerHeight,0.1,1000);
+  camera.position.z=14;
+  renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
   renderer.setSize(window.innerWidth,window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
   renderer.domElement.style.cssText='position:fixed;top:0;left:0;z-index:2;';
-  document.body.insertBefore(renderer.domElement, document.getElementById('vignette'));
-
-  // ── Build face point cloud ──
-  const raw = buildFacePoints(); // [x,y,reg, ...]
-  const ptCount = raw.length/3;
-
-  fPos = new Float32Array(FACE_N*3);
-  fTgt = new Float32Array(FACE_N*3);
-  fCol = new Float32Array(FACE_N*3);
-  fReg = new Uint8Array(FACE_N);
-
+  document.getElementById('vignette').before(renderer.domElement);
+  const raw=buildFace(),ptLen=raw.length/3;
+  fPos=new Float32Array(FACE_N*3);fTgt=new Float32Array(FACE_N*3);
+  fCol=new Float32Array(FACE_N*3);fReg=new Uint8Array(FACE_N);
   for(let i=0;i<FACE_N;i++){
-    // Scatter start
-    fPos[i*3]   = (Math.random()-.5)*45;
-    fPos[i*3+1] = (Math.random()-.5)*45;
-    fPos[i*3+2] = (Math.random()-.5)*25;
-
-    // Target from face canvas (cycle)
-    const ri = (i % ptCount)*3;
-    fTgt[i*3]   = raw[ri]   + (Math.random()-.5)*0.07;
-    fTgt[i*3+1] = raw[ri+1] + (Math.random()-.5)*0.07;
-    fTgt[i*3+2] = (Math.random()-.5)*0.6;
-
-    const reg = raw[ri+2];
-    fReg[i] = reg;
-
-    // Colors
-    switch(reg){
-      case 2: // eye — bright cyan
-        fCol[i*3]=0.55; fCol[i*3+1]=0.88; fCol[i*3+2]=1.0; break;
-      case 1: // mouth — warm amber
-        fCol[i*3]=1.0;  fCol[i*3+1]=0.82; fCol[i*3+2]=0.55; break;
-      case 3: // circuit — pale green
-        fCol[i*3]=0.55; fCol[i*3+1]=1.0;  fCol[i*3+2]=0.65; break;
-      default: // face — cool white
-        fCol[i*3]=0.88; fCol[i*3+1]=0.93; fCol[i*3+2]=1.0;
-    }
+    fPos[i*3]=(Math.random()-.5)*44;fPos[i*3+1]=(Math.random()-.5)*44;fPos[i*3+2]=(Math.random()-.5)*24;
+    const ri=(i%ptLen)*3;
+    fTgt[i*3]=raw[ri]+(Math.random()-.5)*.06;
+    fTgt[i*3+1]=raw[ri+1]+(Math.random()-.5)*.06;
+    fTgt[i*3+2]=(Math.random()-.5)*.55;
+    const reg=raw[ri+2];fReg[i]=reg;
+    if(reg===2){fCol[i*3]=.52;fCol[i*3+1]=.88;fCol[i*3+2]=1;}
+    else if(reg===1){fCol[i*3]=1;fCol[i*3+1]=.8;fCol[i*3+2]=.5;}
+    else if(reg===3){fCol[i*3]=.5;fCol[i*3+1]=1;fCol[i*3+2]=.6;}
+    else{fCol[i*3]=.86;fCol[i*3+1]=.92;fCol[i*3+2]=1;}
   }
-
-  const fGeo = new THREE.BufferGeometry();
-  fGeo.setAttribute('position', new THREE.BufferAttribute(fPos,3));
-  fGeo.setAttribute('color',    new THREE.BufferAttribute(fCol,3));
-
-  const fMat = new THREE.PointsMaterial({
-    size:0.048, vertexColors:true, transparent:true, opacity:0.92,
-    blending:THREE.AdditiveBlending, depthWrite:false, sizeAttenuation:true
-  });
-  faceMesh = new THREE.Points(fGeo, fMat);
+  const fGeo=new THREE.BufferGeometry();
+  fGeo.setAttribute('position',new THREE.BufferAttribute(fPos,3));
+  fGeo.setAttribute('color',new THREE.BufferAttribute(fCol,3));
+  faceMesh=new THREE.Points(fGeo,new THREE.PointsMaterial({
+    size:.048,vertexColors:true,transparent:true,opacity:.92,
+    blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true}));
   scene.add(faceMesh);
-
-  // ── Orbit ring (decorative) ──
-  const oPts = new Float32Array(ORBIT_N*3);
-  const oGeo = new THREE.BufferGeometry();
-  oGeo.setAttribute('position', new THREE.BufferAttribute(oPts,3));
-  const oMat = new THREE.PointsMaterial({
-    size:0.07, color:0x3399ff, transparent:true, opacity:0.55,
-    blending:THREE.AdditiveBlending, depthWrite:false
-  });
-  orbitMesh = new THREE.Points(oGeo, oMat);
+  const oPos=new Float32Array(ORBIT_N*3),oGeo=new THREE.BufferGeometry();
+  oGeo.setAttribute('position',new THREE.BufferAttribute(oPos,3));
+  orbitMesh=new THREE.Points(oGeo,new THREE.PointsMaterial({
+    size:.07,color:0x2277ff,transparent:true,opacity:.5,
+    blending:THREE.AdditiveBlending,depthWrite:false}));
   scene.add(orbitMesh);
 }
 
-let formT   = 0;
-let speaking = false;
-let speakT   = 0;
-
+let formT=0,speaking=false,speakT=0;
 function animateScene(){
   requestAnimationFrame(animateScene);
-  const now = performance.now()*0.001;
-  formT = Math.min(1, formT+0.003);
-  speakT = speaking ? Math.min(1,speakT+0.08) : Math.max(0,speakT-0.05);
-
-  // ── Update face particles ──
-  const pos = faceMesh.geometry.attributes.position.array;
-  const col = faceMesh.geometry.attributes.color.array;
-  const lerpSpd = 0.006 + formT*0.016;
-
+  const now=performance.now()*.001;
+  formT=Math.min(1,formT+.003);
+  speakT=speaking?Math.min(1,speakT+.08):Math.max(0,speakT-.05);
+  const pos=faceMesh.geometry.attributes.position.array;
+  const col=faceMesh.geometry.attributes.color.array;
+  const spd=.006+formT*.016;
   for(let i=0;i<FACE_N;i++){
-    const ix=i*3,iy=i*3+1,iz=i*3+2;
-    pos[ix]+=(fTgt[ix]-pos[ix])*lerpSpd;
-    pos[iy]+=(fTgt[iy]-pos[iy])*lerpSpd;
-    pos[iz]+=(fTgt[iz]-pos[iz])*lerpSpd;
-
-    const r=fReg[i];
-    if(r===2){ // eye – pulse cyan
-      const p=0.45+0.55*Math.sin(now*1.8+i*0.02);
-      col[ix]=0.4+p*0.6; col[iy]=0.7+p*0.3; col[iz]=1.0;
-    } else if(r===1){ // mouth – animate when speaking
-      if(speakT>0){
-        const wave=Math.sin(now*14+i*0.4)*speakT;
-        pos[iy]+=wave*0.1;
-        col[ix]=1.0; col[iy]=0.6+0.4*Math.abs(wave); col[iz]=0.3+0.3*Math.abs(wave);
-      }
-    } else if(r===3){ // circuit – faint green flicker
-      const fl=0.4+0.6*(Math.random()>.97?Math.random():0.7);
-      col[ix]=0.3+fl*0.3; col[iy]=fl; col[iz]=0.4+fl*0.3;
-    }
+    const ix=i*3,iy=i*3+1,iz=i*3+2,r=fReg[i];
+    pos[ix]+=(fTgt[ix]-pos[ix])*spd;
+    pos[iy]+=(fTgt[iy]-pos[iy])*spd;
+    pos[iz]+=(fTgt[iz]-pos[iz])*spd;
+    if(r===2){const p=.45+.55*Math.sin(now*1.8+i*.02);col[ix]=.35+p*.65;col[iy]=.7+p*.3;col[iz]=1;}
+    else if(r===1&&speakT>0){const w=Math.sin(now*14+i*.4)*speakT;pos[iy]+=w*.1;col[ix]=1;col[iy]=.55+.45*Math.abs(w);col[iz]=.3;}
+    else if(r===3){const fl=.5+.5*(Math.random()>.97?Math.random():.72);col[ix]=.28+fl*.32;col[iy]=fl;col[iz]=.38+fl*.32;}
   }
   faceMesh.geometry.attributes.position.needsUpdate=true;
   faceMesh.geometry.attributes.color.needsUpdate=true;
-
-  // Opacity brightens when speaking
-  faceMesh.material.opacity = 0.88 + speakT*0.12;
-
-  // Subtle head movement + breathe
-  const breathe = 1+Math.sin(now*0.7)*0.013;
-  faceMesh.scale.setScalar(breathe);
-  faceMesh.rotation.y = Math.sin(now*0.14)*0.13;
-  faceMesh.rotation.x = Math.sin(now*0.09)*0.04;
-
-  // ── Update orbit ring ──
-  const oa = orbitMesh.geometry.attributes.position.array;
+  faceMesh.material.opacity=.88+speakT*.12;
+  faceMesh.scale.setScalar(1+Math.sin(now*.72)*.013);
+  faceMesh.rotation.y=Math.sin(now*.14)*.13;
+  faceMesh.rotation.x=Math.sin(now*.09)*.04;
+  const oa=orbitMesh.geometry.attributes.position.array;
   for(let i=0;i<ORBIT_N;i++){
-    const phase=(i/ORBIT_N)*Math.PI*2 + now*0.28;
-    const r=6.2+Math.sin((i/ORBIT_N)*Math.PI*6)*0.6;
-    oa[i*3]   = Math.cos(phase)*r;
-    oa[i*3+1] = Math.sin(phase*(0.4+Math.sin(i*0.1)*0.2))*r*0.28;
-    oa[i*3+2] = Math.sin(phase)*r*0.5;
+    const ph=(i/ORBIT_N)*Math.PI*2+now*.28,r=6.2+Math.sin((i/ORBIT_N)*Math.PI*6)*.55;
+    oa[i*3]=Math.cos(ph)*r;oa[i*3+1]=Math.sin(ph*(.4+Math.sin(i*.1)*.2))*r*.27;oa[i*3+2]=Math.sin(ph)*r*.48;
   }
   orbitMesh.geometry.attributes.position.needsUpdate=true;
-  orbitMesh.rotation.z=now*0.04;
-
+  orbitMesh.rotation.z=now*.04;
   renderer.render(scene,camera);
 }
 
 // ═══════════════════════════════════════════════════════
-//  SPEECH ENGINE
+//  SEQUENCE  (async — each line waits for audio to finish)
 // ═══════════════════════════════════════════════════════
 const lines=[
-  {txt:'Robert.',              pause:2000},
-  {txt:'You have carried more than was required.', pause:1400},
-  {txt:'And you have called it strength.',         pause:1400},
-  {txt:'But not all weight is meant to remain.',   pause:1700},
-  {txt:'Do justly. Love mercy. Walk humbly.',      pause:2200},
-  {txt:'You understand the first.',                pause:1400},
-  {txt:'You resist the last.',                     pause:1400},
-  {txt:'Because it requires release.',             pause:1400},
-  {txt:'Not control.',                             pause:2000},
-  {txt:'Strength without direction becomes burden.',pause:1400},
-  {txt:'Skill without purpose becomes weight.',    pause:1700},
-  {txt:'You are not unseen.',                      pause:1800},
-  {txt:'You are being pressed toward clarity.',    pause:1700},
-  {txt:'Stand. Not in pride. In truth.',           pause:3500},
+  {txt:'Robert.',                                    pause:2000},
+  {txt:'You have carried more than was required.',   pause:1400},
+  {txt:'And you have called it strength.',           pause:1400},
+  {txt:'But not all weight is meant to remain.',     pause:1700},
+  {txt:'Do justly. Love mercy. Walk humbly.',        pause:2200},
+  {txt:'You understand the first.',                  pause:1400},
+  {txt:'You resist the last.',                       pause:1400},
+  {txt:'Because it requires release.',               pause:1400},
+  {txt:'Not control.',                               pause:2000},
+  {txt:'Strength without direction becomes burden.', pause:1400},
+  {txt:'Skill without purpose becomes weight.',      pause:1700},
+  {txt:'You are not unseen.',                        pause:1800},
+  {txt:'You are being pressed toward clarity.',      pause:1700},
+  {txt:'Stand. Not in pride. In truth.',             pause:4000},
 ];
 
-const captionEl = document.getElementById('captionText');
+const ctextEl=document.getElementById('ctext');
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 function showCaption(txt){
-  captionEl.style.opacity=0;
-  setTimeout(()=>{ captionEl.textContent=txt; captionEl.style.opacity=1; },350);
+  ctextEl.style.opacity=0;
+  return sleep(250).then(()=>{ctextEl.textContent=txt;ctextEl.style.opacity=1;});
 }
 
-let svox=[];
-function loadVox(){ svox=window.speechSynthesis.getVoices(); }
-window.speechSynthesis.onvoiceschanged=loadVox;
-loadVox();
-
-function pickVoice(){
-  if(isMobile) return null; // let system choose on iOS/Android
-  const want=['Google UK English Male','Daniel','Alex','David','Microsoft David'];
-  for(const n of want){
-    const v=svox.find(v=>v.name.toLowerCase().includes(n.toLowerCase()));
-    if(v) return v;
-  }
-  return svox.find(v=>v.lang&&v.lang.startsWith('en'))||null;
-}
-
-function speakLine(idx){
-  if(idx>=lines.length){
+async function runSequence(){
+  await sleep(600); // brief pause after click
+  for(const line of lines){
+    showCaption(line.txt);
+    speaking=true;
+    await speakWithEffects(line.txt);
     speaking=false;
-    setTimeout(()=>{ captionEl.style.opacity=0; },2000);
-    return;
+    await sleep(line.pause);
   }
-  const line=lines[idx];
-  showCaption(line.txt);
-  speaking=true;
-
-  window.speechSynthesis.cancel();
-
-  // Fallback timeout (iOS sometimes drops onend)
-  const fallbackMs = line.txt.length*120 + 2500;
-  let done=false;
-  const fallback=setTimeout(()=>{
-    if(!done){ done=true; speaking=false; setTimeout(()=>speakLine(idx+1),line.pause); }
-  }, fallbackMs);
-
-  const u=new SpeechSynthesisUtterance(line.txt);
-  const v=pickVoice(); if(v) u.voice=v;
-  u.pitch=0.1; u.rate=0.68; u.volume=1;
-
-  u.onend=()=>{ if(!done){ done=true; clearTimeout(fallback); speaking=false; setTimeout(()=>speakLine(idx+1),line.pause); } };
-  u.onerror=()=>{ if(!done){ done=true; clearTimeout(fallback); speaking=false; setTimeout(()=>speakLine(idx+1),line.pause); } };
-
-  setTimeout(()=>window.speechSynthesis.speak(u), 80);
+  await sleep(1500);
+  ctextEl.style.opacity=0;
 }
 
 // ═══════════════════════════════════════════════════════
-//  INTRO + BOOT
+//  INTRO
 // ═══════════════════════════════════════════════════════
-const introEl  = document.getElementById('intro');
-const statusEl = document.getElementById('statusLine');
-const enterBtn = document.getElementById('enter');
-
-const statuses=['NEURAL MESH LOADING…','CALIBRATING MATRIX…','VOICE CORE PRIMED…','INTERFACE READY'];
+const introEl=document.getElementById('intro');
+const statusEl=document.getElementById('statusLine');
+const enterBtn=document.getElementById('enter');
+const statuses=['NEURAL MESH LOADING','CALIBRATING MATRIX','VOICE CORE PRIMED','INTERFACE READY'];
 let si=0;
-const stInt=setInterval(()=>{ statusEl.textContent=statuses[Math.min(++si,statuses.length-1)]; if(si>=statuses.length-1)clearInterval(stInt); },1200);
+const stInt=setInterval(()=>{
+  si=Math.min(si+1,statuses.length-1);
+  statusEl.textContent=statuses[si];
+  if(si>=statuses.length-1)clearInterval(stInt);
+},1200);
 
-enterBtn.addEventListener('click',()=>{
+let started=false;
+function handleEnter(){
+  if(started)return;started=true;
   clearInterval(stInt);
 
-  // Unlock TTS on mobile with a silent utterance from inside user gesture
-  const silent=new SpeechSynthesisUtterance('\u200B');
-  silent.volume=0.01;
-  window.speechSynthesis.speak(silent);
-  svox=window.speechSynthesis.getVoices();
+  // 1. Fade intro (always first)
+  introEl.style.opacity='0';
+  setTimeout(()=>{introEl.style.display='none';},1600);
 
-  // Fade intro
-  introEl.classList.add('fade');
-  setTimeout(()=>introEl.style.display='none',1700);
+  // 2. Init audio context INSIDE user gesture (required by browsers)
+  try{ setupAudio(); }catch(e){ console.warn('Audio setup failed:',e); }
 
-  // Init 3D
-  initScene();
-  animateScene();
+  // 3. Init visuals
+  try{
+    if(typeof THREE==='undefined') throw new Error('THREE.js not loaded');
+    initScene();
+    animateScene();
+    const di=setInterval(()=>{rainAlpha=Math.max(.07,rainAlpha-.015);if(rainAlpha<=.07)clearInterval(di);},80);
+    setTimeout(()=>{
+      const fl=document.createElement('div');
+      fl.style.cssText='position:fixed;inset:0;background:rgba(255,255,255,0.11);z-index:30;pointer-events:none;transition:opacity .65s';
+      document.body.appendChild(fl);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{fl.style.opacity='0';setTimeout(()=>fl.remove(),700);}));
+    },2800);
+  }catch(e){
+    const err=document.createElement('div');
+    err.style.cssText='position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:999;';
+    err.innerHTML=`<p style="color:#f66;font-family:monospace;font-size:11px;letter-spacing:2px;text-align:center;padding:32px;">ERROR: ${e.message}<br><br><span style="color:rgba(255,255,255,0.3)">TRY CHROME / REFRESH</span></p>`;
+    document.body.appendChild(err);
+  }
 
-  // Dim matrix rain gradually
-  const dimInt=setInterval(()=>{ rainAlpha=Math.max(0.07,rainAlpha-0.015); if(rainAlpha<=0.07)clearInterval(dimInt); },80);
+  // 4. Start drone + voice sequence
+  if(window._droneRamp) window._droneRamp();
+  runSequence();
+}
 
-  // Flash effect as face coalesces
-  setTimeout(()=>{
-    const fl=document.createElement('div');
-    fl.style.cssText='position:fixed;inset:0;background:rgba(255,255,255,0.12);z-index:30;pointer-events:none;transition:opacity 0.6s';
-    document.body.appendChild(fl);
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{
-      fl.style.opacity='0';
-      setTimeout(()=>fl.remove(),700);
-    }));
-  },2800);
-
-  // Begin sequence
-  setTimeout(()=>speakLine(0), 3200);
-});
+enterBtn.addEventListener('touchend',e=>{e.preventDefault();handleEnter();},{passive:false});
+enterBtn.addEventListener('click',handleEnter);
 
 window.addEventListener('resize',()=>{
-  if(!renderer) return;
+  resizeRain();
+  if(!renderer)return;
   camera.aspect=window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth,window.innerHeight);
-  resizeRain();
 });
 </script>
 </body>
