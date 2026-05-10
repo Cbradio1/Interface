@@ -95,7 +95,7 @@ resizeRain();window.addEventListener('resize',resizeRain);
 })();
 
 // ———————————————————————————————————————————————————————
-// WEB AUDIO ENGINE — THE ALIVE SETTINGS
+// WEB AUDIO ENGINE — ALIVE SETTINGS + PROXY FIX
 // ———————————————————————————————————————————————————————
 let audioCtx, masterGain, effectChainInput, droneStarted=false;
 
@@ -105,7 +105,6 @@ function buildImpulseResponse(duration, decay) {
   for(let ch=0; ch<2; ch++){
     const d = buf.getChannelData(ch);
     for(let i=0; i<len; i++){
-      // Metallic modulation: multiplying by a high-freq sine creates that "machine chamber" ring
       d[i] = (Math.random()*2-1) * Math.pow(1-i/len, decay) * Math.sin(i * 0.05);
     }
   }
@@ -117,93 +116,72 @@ function setupAudio(){
   masterGain = audioCtx.createGain();
   masterGain.gain.value = 1.2;
   masterGain.connect(audioCtx.destination);
-
   effectChainInput = audioCtx.createGain();
 
-  // 1. +12dB Bass Boost at 75Hz (Chest-resonating rumble)
   const bass = audioCtx.createBiquadFilter();
-  bass.type = 'peaking';
-  bass.frequency.value = 75;
-  bass.Q.value = 1.0;
-  bass.gain.value = 12;
+  bass.type = 'peaking'; bass.frequency.value = 75; bass.Q.value = 1.0; bass.gain.value = 12;
 
-  // 2. High frequency roll-off at 2.8kHz (Hollow / Ancient)
   const highCut = audioCtx.createBiquadFilter();
-  highCut.type = 'lowpass';
-  highCut.frequency.value = 2800;
-  highCut.Q.value = 0.7;
+  highCut.type = 'lowpass'; highCut.frequency.value = 2800; highCut.Q.value = 0.7;
 
-  // 3. 5-Second Metallic Reverb
   const convolver = audioCtx.createConvolver();
   convolver.buffer = buildImpulseResponse(5, 2.0);
 
   const dryGain = audioCtx.createGain(); dryGain.gain.value = 0.5;
   const wetGain = audioCtx.createGain(); wetGain.gain.value = 0.6;
 
-  // Routing the Chain
   effectChainInput.connect(bass);
   bass.connect(highCut);
-  
-  // Split for reverb
   highCut.connect(dryGain);
   highCut.connect(convolver);
-  
-  convolver.connect(wetGain);
-  
   dryGain.connect(masterGain);
+  convolver.connect(wetGain);
   wetGain.connect(masterGain);
 
-  // 4. Deep Sub-Bass Drone (48Hz + Harmonics)
   function makeDrone(freq, vol){
     const osc = audioCtx.createOscillator();
     const g = audioCtx.createGain();
     const env = audioCtx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = freq;
-    env.gain.value = 0;
+    osc.type = 'sine'; osc.frequency.value = freq; env.gain.value = 0;
     osc.connect(g); g.connect(env); env.connect(masterGain);
-    osc.start();
-    g.gain.value = vol;
-    return env;
+    osc.start(); g.gain.value = vol; return env;
   }
   window._drone1 = makeDrone(48, 0.15); 
   window._drone2 = makeDrone(96, 0.05);
   window._droneRamp = () => {
     if(droneStarted) return; droneStarted=true;
-    const now = audioCtx.currentTime;
-    [window._drone1, window._drone2].forEach(d => {
-        d.gain.setTargetAtTime(1, now, 3.0); // Slow fade-in
-    });
+    [window._drone1, window._drone2].forEach(d => d.gain.setTargetAtTime(1, audioCtx.currentTime, 3.0));
   };
 }
 
 async function speakWithEffects(text){
-  const url = `https://api.streamelements.com/kappa/v2/speech?voice=Brian&text=${encodeURIComponent(text)}`;
+  // Proxy fix for GitHub Pages
+  const proxy = "https://corsproxy.io/?";
+  const ttsUrl = `https://api.streamelements.com/kappa/v2/speech?voice=Brian&text=${encodeURIComponent(text)}`;
+  
   try{
-    const res = await fetch(url);
+    const res = await fetch(proxy + encodeURIComponent(ttsUrl));
     const buf = await res.arrayBuffer();
     const decoded = await audioCtx.decodeAudioData(buf);
 
     return new Promise(resolve=>{
       const src = audioCtx.createBufferSource();
       src.buffer = decoded;
-      // 5. Pitch Down 18% (playbackRate 0.82)
-      src.playbackRate.value = 0.82; 
+      src.playbackRate.value = 0.82; // Alive Pitch
       src.connect(effectChainInput);
       src.start(0);
       src.onended = resolve;
     });
   }catch(err){
-    console.warn('Voice API Error:', err);
+    console.error('Audio fetch error:', err);
     return new Promise(r => setTimeout(r, 2000));
   }
 }
 
 // ———————————————————————————————————————————————————————
-// PARTICLE FACE 
+// PARTICLE FACE & SCENE 
 // ———————————————————————————————————————————————————————
 let scene,camera,renderer,faceMesh,orbitMesh,fPos,fTgt,fCol,fReg;
-const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 const FACE_N=isMobile?6000:10000,ORBIT_N=280;
 
 function buildFace(){
@@ -387,7 +365,7 @@ function showCaption(txt){
 
 async function runSequence(){
   await sleep(600); 
-  if(window._droneRamp) window._droneRamp(); // Start drone with sequence
+  if(window._droneRamp) window._droneRamp(); 
   for(const line of lines){
     showCaption(line.txt);
     speaking=true;
@@ -417,14 +395,10 @@ let started=false;
 function handleEnter(){
   if(started)return;started=true;
   clearInterval(stInt);
-
   introEl.style.opacity='0';
   setTimeout(()=>{introEl.style.display='none';},1600);
-
   try{ setupAudio(); }catch(e){ console.warn('Audio setup failed:',e); }
-
   try{
-    if(typeof THREE==='undefined') throw new Error('THREE.js not loaded');
     initScene();
     animateScene();
     const di=setInterval(()=>{rainAlpha=Math.max(.07,rainAlpha-.015);if(rainAlpha<=.07)clearInterval(di);},80);
@@ -434,13 +408,7 @@ function handleEnter(){
       document.body.appendChild(fl);
       requestAnimationFrame(()=>requestAnimationFrame(()=>{fl.style.opacity='0';setTimeout(()=>fl.remove(),700);}));
     },2800);
-  }catch(e){
-    const err=document.createElement('div');
-    err.style.cssText='position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:999;';
-    err.innerHTML=`<p style="color:#f66;font-family:monospace;font-size:11px;letter-spacing:2px;text-align:center;padding:32px;">ERROR: ${e.message}<br><br><span style="color:rgba(255,255,255,0.3)">TRY CHROME / REFRESH</span></p>`;
-    document.body.appendChild(err);
-  }
-
+  }catch(e){ console.error(e); }
   runSequence();
 }
 
